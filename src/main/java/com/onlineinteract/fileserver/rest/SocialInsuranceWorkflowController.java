@@ -31,7 +31,7 @@ public class SocialInsuranceWorkflowController {
 		/**
 		 * Fetch Customer
 		 */
-		String customerServiceUrl = "http://localhost:9082/fetchCustomer/" + customer.get("CustomerId");
+		String customerServiceUrl = "http://customer-service:9082/fetchCustomer/" + customer.get("CustomerId");
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -44,7 +44,7 @@ public class SocialInsuranceWorkflowController {
 		/**
 		 * Fraud Check
 		 */
-		String fraudCheckServiceUrl = "http://localhost:9083/fraudCheck";
+		String fraudCheckServiceUrl = "http://fraud-check-service:9083/fraudCheck";
 		HttpEntity<String> request = new HttpEntity<String>(customerJson, headers);
 		response = restTemplate.postForEntity(fraudCheckServiceUrl, request, String.class);
 		System.out.println("Response from Fraud Check Service: " + response.getBody());
@@ -61,7 +61,7 @@ public class SocialInsuranceWorkflowController {
 			return new ResponseEntity<>("Sorry, there was a problem converting customer json to map",
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		String socialInsuranceVerificationUrl = "http://localhost:9084/verifySin";
+		String socialInsuranceVerificationUrl = "http://social-insurance-verification-service:9085/verifySin";
 		HttpEntity<Map<String, String>> sinVerificationRequest = new HttpEntity<Map<String, String>>(customer, headers);
 		response = restTemplate.postForEntity(socialInsuranceVerificationUrl, sinVerificationRequest, String.class);
 		System.out.println("Response from Social Insurance Verification Service: " + response.getBody());
