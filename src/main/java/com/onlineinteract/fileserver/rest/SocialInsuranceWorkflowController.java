@@ -1,6 +1,7 @@
 package com.onlineinteract.fileserver.rest;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -11,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -25,7 +27,7 @@ public class SocialInsuranceWorkflowController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "text/plain", value = "/verifySin")
 	@ResponseBody
-	public ResponseEntity<String> verifySin(@RequestBody Map<String, String> customer) {
+	public ResponseEntity<String> verifySin(@RequestBody Map<String, String> customer, @RequestHeader HttpHeaders incomingHeaders) {
 		System.out.println("\nVerifying SIN with customer ID: " + customer.get("CustomerId"));
 
 		/**
@@ -34,8 +36,9 @@ public class SocialInsuranceWorkflowController {
 		String customerServiceUrl = "http://customer:9082/fetchCustomer/" + customer.get("CustomerId");
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
+		headers.addAll(incomingHeaders);
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		ResponseEntity<String> response = restTemplate.getForEntity(customerServiceUrl, String.class);
+		ResponseEntity<String> response = restTemplate.getForEntity(customerServiceUrl, String.class, headers);
 		String customerJson = response.getBody();
 		System.out.println("Response from Customer Service: " + customerJson);
 		if (response.getStatusCode() != HttpStatus.OK)
@@ -45,6 +48,14 @@ public class SocialInsuranceWorkflowController {
 		 * Fraud Check
 		 */
 		String fraudCheckServiceUrl = "http://fraud-check:9083/fraudCheck";
+		
+		System.out.println("Headers: ");
+	    Iterator it = headers.entrySet().iterator();
+	    while (it.hasNext()) {
+	        Map.Entry pair = (Map.Entry)it.next();
+	        System.out.println(pair.getKey() + " = " + pair.getValue());
+	    }
+	    
 		HttpEntity<String> request = new HttpEntity<String>(customerJson, headers);
 		response = restTemplate.postForEntity(fraudCheckServiceUrl, request, String.class);
 		System.out.println("Response from Fraud Check Service: " + response.getBody());
