@@ -68,6 +68,7 @@ public class SocialInsuranceWorkflowController {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			customer = mapper.readValue(customerJson, Map.class);
+			logCustomer(customer);
 		} catch (IOException e) {
 			return new ResponseEntity<>("Sorry, there was a problem converting customer json to map",
 					HttpStatus.INTERNAL_SERVER_ERROR);
@@ -81,5 +82,15 @@ public class SocialInsuranceWorkflowController {
 					response.getStatusCode());
 
 		return new ResponseEntity<>("SIN Verified for customer: " + customer.get("CustomerId"), HttpStatus.OK);
+	}
+	
+	protected Integer logCustomer(Map<String, String> customer) {
+		try {
+			Integer customerId = Integer.valueOf(customer.get("CustomerId"));
+			System.out.println("Logging customer with id: " + customerId);
+			return customerId;
+		} catch (Throwable e) {
+			return -1;
+		}
 	}
 }
