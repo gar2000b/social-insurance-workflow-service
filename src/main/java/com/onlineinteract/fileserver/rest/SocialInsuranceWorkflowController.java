@@ -27,7 +27,8 @@ public class SocialInsuranceWorkflowController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(method = RequestMethod.POST, consumes = "application/json", produces = "text/plain", value = "/verifySin")
 	@ResponseBody
-	public ResponseEntity<String> verifySin(@RequestBody Map<String, String> customer, @RequestHeader HttpHeaders incomingHeaders) {
+	public ResponseEntity<String> verifySin(@RequestBody Map<String, String> customer,
+			@RequestHeader HttpHeaders incomingHeaders) {
 		System.out.println("\nVerifying SIN with customer ID: " + customer.get("CustomerId"));
 
 		/**
@@ -48,14 +49,23 @@ public class SocialInsuranceWorkflowController {
 		 * Fraud Check
 		 */
 		String fraudCheckServiceUrl = "http://fraud-check:9083/fraudCheck";
-		
+
 		System.out.println("Headers: ");
-	    Iterator it = headers.entrySet().iterator();
-	    while (it.hasNext()) {
-	        Map.Entry pair = (Map.Entry)it.next();
-	        System.out.println(pair.getKey() + " = " + pair.getValue());
-	    }
-	    
+		Iterator it = headers.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pair = (Map.Entry) it.next();
+			System.out.println(pair.getKey() + " = " + pair.getValue());
+		}
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			customer = mapper.readValue(customerJson, Map.class);
+			logCustomer(customer);
+		} catch (IOException e) {
+			return new ResponseEntity<>("Sorry, there was a problem converting customer json to map",
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
 		HttpEntity<String> request = new HttpEntity<String>(customerJson, headers);
 		response = restTemplate.postForEntity(fraudCheckServiceUrl, request, String.class);
 		System.out.println("Response from Fraud Check Service: " + response.getBody());
@@ -65,14 +75,7 @@ public class SocialInsuranceWorkflowController {
 		/**
 		 * Social Insurance Verification
 		 */
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			customer = mapper.readValue(customerJson, Map.class);
-			logCustomer(customer);
-		} catch (IOException e) {
-			return new ResponseEntity<>("Sorry, there was a problem converting customer json to map",
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+
 		String socialInsuranceVerificationUrl = "http://social-insurance-verification:9085/verifySin";
 		HttpEntity<Map<String, String>> sinVerificationRequest = new HttpEntity<Map<String, String>>(customer, headers);
 		response = restTemplate.postForEntity(socialInsuranceVerificationUrl, sinVerificationRequest, String.class);
@@ -83,7 +86,7 @@ public class SocialInsuranceWorkflowController {
 
 		return new ResponseEntity<>("SIN Verified for customer: " + customer.get("CustomerId"), HttpStatus.OK);
 	}
-	
+
 	protected Integer logCustomer(Map<String, String> customer) {
 		try {
 			Integer customerId = Integer.valueOf(customer.get("CustomerId"));
@@ -91,6 +94,15 @@ public class SocialInsuranceWorkflowController {
 			return customerId;
 		} catch (Throwable e) {
 			return -1;
+		}
+	}
+
+	protected boolean logFraudCheck(String body, Integer customerId) {
+		if (body.equals("Customer checks out OK")) {
+			System.out.println("Logging Fraud Check with customer Id: " + customerId);
+			return true;
+		} else {
+			return false;
 		}
 	}
 }
