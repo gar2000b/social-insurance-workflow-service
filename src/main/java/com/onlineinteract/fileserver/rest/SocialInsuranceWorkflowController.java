@@ -69,6 +69,7 @@ public class SocialInsuranceWorkflowController {
 		HttpEntity<String> request = new HttpEntity<String>(customerJson, headers);
 		response = restTemplate.postForEntity(fraudCheckServiceUrl, request, String.class);
 		System.out.println("Response from Fraud Check Service: " + response.getBody());
+		logFraudCheck(response.getBody(), Integer.valueOf(customer.get("CustomerId")));
 		if (response.getStatusCode() != HttpStatus.OK)
 			return new ResponseEntity<>("Sorry, there was a problem with fraud check", response.getStatusCode());
 
@@ -80,6 +81,7 @@ public class SocialInsuranceWorkflowController {
 		HttpEntity<Map<String, String>> sinVerificationRequest = new HttpEntity<Map<String, String>>(customer, headers);
 		response = restTemplate.postForEntity(socialInsuranceVerificationUrl, sinVerificationRequest, String.class);
 		System.out.println("Response from Social Insurance Verification Service: " + response.getBody());
+		logVerification(response.getBody());
 		if (response.getStatusCode() != HttpStatus.OK)
 			return new ResponseEntity<>("Sorry, there was a problem with Social Insurance Verification",
 					response.getStatusCode());
@@ -103,6 +105,16 @@ public class SocialInsuranceWorkflowController {
 			return true;
 		} else {
 			return false;
+		}
+	}
+
+	protected Integer logVerification(String body) {
+		try {
+			Integer customerId = Integer.valueOf(body.substring(body.indexOf(": ") + 2));
+			System.out.println("Logging verification with customer id: " + customerId);
+			return customerId;
+		} catch (Throwable e) {
+			return -1;
 		}
 	}
 }

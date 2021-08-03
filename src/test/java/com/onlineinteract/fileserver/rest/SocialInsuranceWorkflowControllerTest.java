@@ -50,5 +50,17 @@ public class SocialInsuranceWorkflowControllerTest {
 		boolean result = socialInsuranceWorkflowController.logFraudCheck("Customer noes not check out OK", 1);
 		assertEquals(false, result);
 	}
+	
+	@Test
+	public void logVerificationTest() {
+		Integer result = socialInsuranceWorkflowController.logVerification("SIN Verified for customer: 1");
+		assertEquals(Integer.valueOf(1), result);
+	}
+	
+	@Test
+	public void logVerificationFailTest() {
+		Integer result = socialInsuranceWorkflowController.logVerification("SIN Verified for customer 1");
+		assertEquals(Integer.valueOf(-1), result);
+	}
 
 }
